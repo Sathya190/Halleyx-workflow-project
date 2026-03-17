@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Halleyx Workflow</title>
+</head>
+
+<body>
+
+<h2>Create Workflow</h2>
+<input id="name" placeholder="Workflow Name">
+<button onclick="createWorkflow()">Create</button>
+
+<h3>Workflow List</h3>
+<ul id="list"></ul>
+
+<h3>Add Step</h3>
+<input id="workflowName" placeholder="Workflow Name">
+<input id="stepName" placeholder="Step Name">
+<button onclick="createStep()">Add Step</button>
+<ul id="steps"></ul>
+
+<h3>Add Rule</h3>
+<input id="ruleStep" placeholder="Step Name">
+<input id="condition" placeholder="Condition (amount > 100)">
+<input id="nextStep" placeholder="Next Step">
+<button onclick="createRule()">Add Rule</button>
+<ul id="rules"></ul>
+
+<h3>Run Workflow</h3>
+<input id="runWorkflow" placeholder="Workflow Name">
+<input id="amount" placeholder="Amount">
+<button onclick="runWorkflow()">Run</button>
+<ul id="logs"></ul>
+
+<script>
+
+async function createWorkflow() {
+    const name = document.getElementById("name").value;
+
+    await fetch("http://127.0.0.1:5000/workflows", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({name})
+    });
+
+    loadWorkflows();
+}
+
+async function loadWorkflows() {
+    const res = await fetch("http://127.0.0.1:5000/workflows");
+    const data = await res.json();
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    data.forEach(w => {
+        const li = document.createElement("li");
+        li.textContent = w.name;
+        list.appendChild(li);
+    });
+}
+
+async function createStep() {
+    const workflow = document.getElementById("workflowName").value;
+    const name = document.getElementById("stepName").value;
+
+    await fetch("http://127.0.0.1:5000/steps", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({workflow, name})
+    });
+
+    loadSteps();
+}
+
+async function loadSteps() {
+    const res = await fetch("http://127.0.0.1:5000/steps");
+    const data = await res.json();
+
+    const list = document.getElementById("steps");
+    list.innerHTML = "";
+
+    data.forEach(s => {
+        const li = document.createElement("li");
+        li.textContent = s.workflow + " → " + s.name;
+        list.appendChild(li);
+    });
+}
+
+async function createRule() {
+    const step = document.getElementById("ruleStep").value;
+    const condition = document.getElementById("condition").value;
+    const next_step = document.getElementById("nextStep").value;
+
+    await fetch("http://127.0.0.1:5000/rules", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({step, condition, next_step})
+    });
+
+    loadRules();
+}
+
+async function loadRules() {
+    const res = await fetch("http://127.0.0.1:5000/rules");
+    const data = await res.json();
+
+    const list = document.getElementById("rules");
+    list.innerHTML = "";
+
+    data.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = r.step + " → " + r.condition + " → " + r.next_step;
+        list.appendChild(li);
+    });
+}
+
+async function runWorkflow() {
+    const workflow = document.getElementById("runWorkflow").value;
+    const amount = parseInt(document.getElementById("amount").value);
+
+    const res = await fetch("http://127.0.0.1:5000/execute", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({workflow, amount})
+    });
+
+    const data = await res.json();
+
+    const list = document.getElementById("logs");
+    list.innerHTML = "";
+
+    data.forEach(log => {
+        const li = document.createElement("li");
+        li.textContent = log;
+        list.appendChild(li);
+    });
+}
+
+loadWorkflows();
+loadSteps();
+loadRules();
+
+</script>
+
+</body>
+</html>
